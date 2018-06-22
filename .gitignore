@@ -8,4 +8,7 @@ build/
 .idea/libraries
 .flutter-plugins
 .idea/workspace.xml
+.idea/dictionaries/
+.idea/**/usage.statistics.xml
+.idea/**/tasks.xml
 lib/**/*.g.dart
