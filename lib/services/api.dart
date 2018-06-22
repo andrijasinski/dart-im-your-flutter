@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:star_wars_movies/models/models.dart';
 
 /// A simple API client to work with themoviedb.org api version 3
@@ -13,8 +15,16 @@ class ApiClient {
     'include_adult': 'false'
   };
 
+  final JsonDecoder _decoder = const JsonDecoder();
+
   Future<MovieSearchResultCollection> _getMovieSearchResults(Uri uri) async {
-//    return MovieSearchResultCollection.fromJson();
+    final response =
+        await http.get(uri, headers: {"Accept": "application/json"});
+
+    final Map<String, dynamic> collectionResponseMap =
+        _decoder.convert(response.body);
+
+    return MovieSearchResultCollection.fromJson(collectionResponseMap);
   }
 
   Future<MovieSearchResultCollection> getMovieSearchResults() async {
@@ -26,8 +36,7 @@ class ApiClient {
     return _getMovieSearchResults(uri);
   }
 
-  Future<MovieSearchResultCollection> getMovieSearchResultsByPage(
-      int page) async {
+  Future<MovieSearchResultCollection> getMovieSearchResultsByPage(int page) {
     final params = Map.of(_BASE_QUERY_PARAM);
     params.addAll({'query': 'Star Wars', 'page': "$page"});
 
@@ -37,14 +46,15 @@ class ApiClient {
   }
 
   Future<Movie> getMovie(int id) async {
+    print('movie id: $id');
     final params = Map.of(_BASE_QUERY_PARAM);
     params.addAll({'append_to_response': 'credits,reviews,images'});
     final Uri uri = Uri.https(_BASE_ENDPOINT, '/3/movie/$id', params);
 
-    return _getMovie(uri);
-  }
+    final response =
+        await http.get(uri, headers: {"Accept": "application/json"});
 
-  Future<Movie> _getMovie(Uri uri) async {
-//    return Movie.fromJson();
+    final Map<String, dynamic> responseMap = _decoder.convert(response.body);
+    return Movie.fromJson(responseMap);
   }
 }
