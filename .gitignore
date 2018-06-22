@@ -1,0 +1,11 @@
+.DS_Store
+.dart_tool/
+
+.packages
+.pub/
+
+build/
+.idea/libraries
+.flutter-plugins
+.idea/workspace.xml
+lib/**/*.g.dart
