@@ -46,7 +46,6 @@ class ApiClient {
   }
 
   Future<Movie> getMovie(int id) async {
-    print('movie id: $id');
     final params = Map.of(_BASE_QUERY_PARAM);
     params.addAll({'append_to_response': 'credits,reviews,images'});
     final Uri uri = Uri.https(_BASE_ENDPOINT, '/3/movie/$id', params);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:star_wars_movies/models/models.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class LoadingSpinner extends StatelessWidget {
   final String text;
@@ -214,14 +215,15 @@ class HeaderImage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
-        Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-              'show movie backdrop as header that collapse when scrolling'),
+        FadeInImage.memoryNetwork(
+          placeholder: kTransparentImage,
+          image: "https://image.tmdb.org/t/p/w780/$path",
+          height: appBarHeight,
+          fit: BoxFit.fitHeight,
         ),
         // This gradient ensures that the toolbar icons are distinct
         // against the background image.
-        DecoratedBox(
+        const DecoratedBox(
           decoration: const BoxDecoration(
             gradient: const LinearGradient(
               begin: const FractionalOffset(0.5, 0.0),
@@ -251,9 +253,9 @@ class TextOverviewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Text(
-          'show movie description',
+          text,
           style: style,
         ));
   }
