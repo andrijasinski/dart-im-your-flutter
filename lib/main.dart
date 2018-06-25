@@ -40,28 +40,35 @@ class MoviesPage extends StatefulWidget {
 class MoviesPageState extends State<MoviesPage> {
   final _client = new ApiClient();
 
+  final List<MovieSearchResult> movies = List();
+
   MoviesPageState();
 
   Widget _movieListWidgetFuture(ApiClient client) {
-    return FutureBuilder<MovieSearchResultCollection>(
-      future: client.getMovieSearchResults(),
-      builder: (BuildContext context,
-          AsyncSnapshot<MovieSearchResultCollection> snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-          case ConnectionState.waiting:
-            return LoadingSpinner(text: 'Loading');
-          default:
-            if (!snapshot.hasError) {
-              return MovieGridView(movies: snapshot.data.results);
-            } else {
-              return ErrorMessageWidget(
-                error: snapshot.error,
-              );
-            }
-        }
-      },
-    );
+    if (movies.isEmpty) {
+      return FutureBuilder<MovieSearchResultCollection>(
+        future: client.getMovieSearchResults(),
+        builder: (BuildContext context,
+            AsyncSnapshot<MovieSearchResultCollection> snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.waiting:
+              return LoadingSpinner(text: 'Loading');
+            default:
+              if (!snapshot.hasError) {
+                movies.addAll(snapshot.data.results);
+                return MovieGridView(movies: movies);
+              } else {
+                return ErrorMessageWidget(
+                  error: snapshot.error,
+                );
+              }
+          }
+        },
+      );
+    } else {
+      return MovieGridView(movies: movies);
+    }
   }
 
   @override
@@ -142,7 +149,5 @@ class MovieItemView extends StatelessWidget {
         ));
   }
 
-  void _onTapGridItem(MovieSearchResult movie, BuildContext context) {
-    print('clicke movie: ${movie.title}');
-  }
+  void _onTapGridItem(MovieSearchResult movie, BuildContext context) {}
 }
