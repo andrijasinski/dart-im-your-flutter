@@ -12,15 +12,9 @@ class LoadingSpinner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [
-          new CircularProgressIndicator(),
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: new Text(text),
-          ),
-        ],
+        children: [new CircularProgressIndicator(), new Text(text)],
       ),
     );
   }
@@ -42,6 +36,24 @@ class ErrorMessageWidget extends StatelessWidget {
         new Text('Error: $error'),
       ],
     ));
+  }
+}
+
+class ActionItemWidget extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  const ActionItemWidget({Key key, this.icon, this.onPressed, this.tooltip})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return new IconButton(
+      icon: new Icon(icon),
+      tooltip: tooltip,
+      onPressed: onPressed,
+    );
   }
 }
 
@@ -204,11 +216,35 @@ class ReviewsWidget extends StatelessWidget {
   }
 }
 
-class HeaderImage extends StatelessWidget {
+class FlexSpaceAppBar extends StatelessWidget {
+  final String title;
   final String path;
   final double appBarHeight;
 
-  const HeaderImage({Key key, @required this.path, @required this.appBarHeight})
+  const FlexSpaceAppBar(
+      {Key key,
+      @required this.title,
+      @required this.path,
+      @required this.appBarHeight})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FlexibleSpaceBar(
+      title: Text(
+        title,
+      ),
+      background: HeroImageWidget(path: path, appBarHeight: appBarHeight),
+    );
+  }
+}
+
+class HeroImageWidget extends StatelessWidget {
+  final String path;
+  final double appBarHeight;
+
+  const HeroImageWidget(
+      {Key key, @required this.path, @required this.appBarHeight})
       : super(key: key);
   @override
   Widget build(BuildContext context) {
@@ -241,10 +277,10 @@ class HeaderImage extends StatelessWidget {
 }
 
 class TextOverviewWidget extends StatelessWidget {
-  const TextOverviewWidget(
-    this.text,
-    this.style, {
+  const TextOverviewWidget({
     Key key,
+    @required this.text,
+    @required this.style,
   }) : super(key: key);
 
   final String text;

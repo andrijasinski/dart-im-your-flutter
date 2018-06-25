@@ -12,10 +12,7 @@ class MoviePage extends StatelessWidget {
 
   final MovieSearchResult movieSearchResult;
 
-  MoviePage(
-    this.movieSearchResult, {
-    Key key,
-  }) : super(key: key);
+  MoviePage({Key key, @required this.movieSearchResult}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,21 +29,13 @@ class MoviePage extends StatelessWidget {
           case ConnectionState.none:
           case ConnectionState.waiting:
             return MinimalMovieInfo(
-              movie: movieSearchResult,
-              scaffoldKey: scaffoldKey,
-              loading: true,
-            );
+                movie: movieSearchResult, scaffoldKey: scaffoldKey);
           default:
             if (snapshot.hasError)
-              return MinimalMovieInfo(
-                movie: movieSearchResult,
-                scaffoldKey: scaffoldKey,
-              );
+              return Text('Error: ${snapshot.error}');
             else
               return FullMovieInfo(
-                movie: snapshot.data,
-                scaffoldKey: scaffoldKey,
-              );
+                  movie: snapshot.data, scaffoldKey: scaffoldKey);
         }
       },
     );
@@ -55,68 +44,56 @@ class MoviePage extends StatelessWidget {
 
 class MinimalMovieInfo extends StatelessWidget {
   final double appBarHeight = 256.0;
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final MovieSearchResult movie;
-  final bool loading;
+  final GlobalKey<ScaffoldState> scaffoldKey;
 
   const MinimalMovieInfo({
     Key key,
     @required this.movie,
     @required this.scaffoldKey,
-    this.loading = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
     return CustomScrollView(
-      slivers: buildSlivers(context),
-    );
-  }
-
-  List<Widget> buildSlivers(BuildContext context) {
-    return <Widget>[
-      SliverAppBar(
-        expandedHeight: appBarHeight,
-        pinned: true,
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.share),
-            onPressed: _onSharePressed,
-            tooltip: 'Share movie',
-          ),
-        ],
-        flexibleSpace: FlexibleSpaceBar(
-          background: HeaderImage(
+      slivers: <Widget>[
+        SliverAppBar(
+          expandedHeight: appBarHeight,
+          pinned: true,
+          actions: <Widget>[
+            IconButton(icon: Icon(Icons.share), onPressed: _onSharePressed)
+          ],
+          flexibleSpace: FlexSpaceAppBar(
+              title: "",
               path: movie.backdropPath ?? movie.posterPath,
               appBarHeight: appBarHeight),
         ),
-      ),
-      SliverList(
-        delegate: SliverChildListDelegate(buildSliverWidgets(context)),
-      )
-    ];
+        SliverList(
+            delegate: SliverChildListDelegate(<Widget>[
+          MovieSpecsView(
+            title: movie.title,
+            posterPath: movie.posterPath,
+            voteAverage: movie.voteAverage,
+            voteCount: movie.voteCount,
+            key: Key(movie.title),
+          ),
+          TextOverviewWidget(text: movie.overview, style: textTheme.body1),
+          LoadingSpinner(text: 'loading'),
+        ])),
+      ],
+    );
   }
 
-  List<Widget> buildSliverWidgets(BuildContext context) {
-    return <Widget>[
-      MovieSpecsView(
-        title: movie.title,
-        posterPath: movie.posterPath,
-        voteAverage: movie.voteAverage,
-        voteCount: movie.voteCount,
-        key: Key(movie.title),
-      ),
-      TextOverviewWidget(movie.overview, Theme.of(context).textTheme.body1),
-    ];
+  void _onSharePressed() {
+    Share.share("Check out ${movie.title}");
   }
-
-  void _onSharePressed() => Share.share("You should check ${movie.title}");
 }
 
 class FullMovieInfo extends StatelessWidget {
   final double appBarHeight = 256.0;
-  final GlobalKey<ScaffoldState> scaffoldKey;
   final Movie movie;
+  final GlobalKey<ScaffoldState> scaffoldKey;
 
   const FullMovieInfo({
     Key key,
@@ -126,53 +103,45 @@ class FullMovieInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
     return CustomScrollView(
-      slivers: buildSlivers(context),
-    );
-  }
-
-  List<Widget> buildSlivers(BuildContext context) {
-    return <Widget>[
-      SliverAppBar(
-        expandedHeight: appBarHeight,
-        pinned: true,
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.share),
-            onPressed: _onSharePressed,
-            tooltip: 'Share movie',
-          ),
-        ],
-        flexibleSpace: FlexibleSpaceBar(
-          background: HeaderImage(
+      scrollDirection: Axis.vertical,
+      primary: true,
+      slivers: <Widget>[
+        SliverAppBar(
+          expandedHeight: appBarHeight,
+          pinned: true,
+          actions: <Widget>[
+            ActionItemWidget(
+                icon: Icons.share, onPressed: _onSharePressed, tooltip: "Share")
+          ],
+          flexibleSpace: FlexSpaceAppBar(
+              title: "",
               path: movie.backdropPath ?? movie.posterPath,
               appBarHeight: appBarHeight),
         ),
-      ),
-      SliverList(
-        delegate: buildSliverChildListDelegate(context),
-      )
-    ];
+        SliverList(
+            delegate: SliverChildListDelegate(<Widget>[
+          MovieSpecsView(
+            key: Key(movie.title),
+            title: movie.title,
+            posterPath: movie.posterPath,
+            voteAverage: movie.voteAverage,
+            voteCount: movie.voteCount,
+            genres: movie.genres,
+          ),
+          TextOverviewWidget(text: movie.tagline, style: textTheme.body2),
+          TextOverviewWidget(text: movie.overview, style: textTheme.body1),
+          ReviewsWidget(reviews: movie.reviews.results),
+        ])),
+      ],
+    );
   }
 
-  SliverChildListDelegate buildSliverChildListDelegate(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    return SliverChildListDelegate(<Widget>[
-      MovieSpecsView(
-        title: movie.title,
-        posterPath: movie.posterPath,
-        voteAverage: movie.voteAverage,
-        voteCount: movie.voteCount,
-        key: Key(movie.title),
-      ),
-      TextOverviewWidget(movie.tagline, textTheme.body2),
-      TextOverviewWidget(movie.overview, textTheme.body1),
-      ReviewsWidget(reviews: movie.reviews.results),
-    ]);
+  void _onSharePressed() {
+    Share.share(
+        "You should check ${movie.title} you can find more info at ${movie.homepage}");
   }
-
-  void _onSharePressed() => Share.share(
-      "You should check ${movie.title} you can find more info at ${movie.homepage}");
 }
 
 class MovieSpecsView extends StatelessWidget {
@@ -237,17 +206,20 @@ class MoviePageRoute extends MaterialPageRoute<MovieSearchResult> {
   final MovieSearchResult movie;
 
   MoviePageRoute(
-    this.movie, {
-    WidgetBuilder builder,
-  }) : super(builder: builder);
+      {WidgetBuilder builder,
+      RouteSettings settings: const RouteSettings(),
+      @required this.movie})
+      : super(builder: builder, settings: settings);
 
   @override
   MovieSearchResult get currentResult => movie;
 
-  static MoviePageRoute of(MovieSearchResult movie) => MoviePageRoute(
-        movie,
-        builder: (BuildContext context) => MoviePage(
-              movie,
-            ),
-      );
+  static MoviePageRoute of(BuildContext context, MovieSearchResult movie) =>
+      MoviePageRoute(
+          movie: movie,
+          builder: (BuildContext context) {
+            return MoviePage(
+              movieSearchResult: movie,
+            );
+          });
 }

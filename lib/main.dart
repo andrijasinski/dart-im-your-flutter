@@ -39,58 +39,82 @@ class MoviesPage extends StatefulWidget {
 }
 
 class MoviesPageState extends State<MoviesPage> {
+  final ScrollController _scrollController = ScrollController();
   final ApiClient _client = new ApiClient();
   final DateFormat _dateFormat = new DateFormat('yyyy');
 
+  final List<MovieSearchResultCollection> _collections = List();
+  final List<MovieSearchResult> _cache = List();
+
+  bool _sorted;
+  bool loadMore = true;
+
   MoviesPageState();
+
+  page() => _collections.last.page;
+
+  totalPages() => _collections.last.totalPages;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_scrollListener);
   }
 
   @override
   void dispose() {
     super.dispose();
+    _scrollController.removeListener(_scrollListener);
   }
 
   Widget _movieListWidgetFuture(ApiClient client) {
-    return FutureBuilder<MovieSearchResultCollection>(
-      future: client.getMovieSearchResults(),
-      builder: (
-        BuildContext context,
-        AsyncSnapshot<MovieSearchResultCollection> snapshot,
-      ) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-          case ConnectionState.waiting:
-            return LoadingSpinner(
-              text: 'Loading',
-            );
-          default:
-            if (snapshot.hasError) {
-              return ErrorMessageWidget(
-                error: snapshot.error,
-              );
-            } else {
-              return MovieGridView(
-                movies: snapshot.data.results,
-                dateFormat: _dateFormat,
-              );
-            }
-        }
-      },
-    );
+    if (_cache.isEmpty) {
+      return FutureBuilder<MovieSearchResultCollection>(
+        future: client.getMovieSearchResults(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.waiting:
+              return LoadingSpinner(text: 'Loading');
+            default:
+              if (snapshot.hasError) {
+                return ErrorMessageWidget(error: snapshot.error);
+              } else {
+                _updateList(snapshot.data);
+                return MovieGridView(
+                    movies: _cache,
+                    dateFormat: _dateFormat,
+                    scrollController: _scrollController);
+              }
+          }
+        },
+      );
+    } else {
+      return MovieGridView(
+          movies: _cache,
+          dateFormat: _dateFormat,
+          scrollController: _scrollController);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    loadMore = true;
     return new Scaffold(
       appBar: new AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: new Text(widget.title),
-        actions: <Widget>[],
+        actions: <Widget>[
+          IconButton(
+              icon: Icon(Icons.arrow_upward),
+              onPressed: _sortAscending,
+              tooltip: 'Sort ascending'),
+          IconButton(
+              icon: Icon(Icons.arrow_downward),
+              onPressed: _sortDescending,
+              tooltip: 'Sort Descending'),
+        ],
       ),
       body: _movieListWidgetFuture(_client),
       // This trailing comma makes auto-formatting nicer for build methods.
@@ -98,16 +122,79 @@ class MoviesPageState extends State<MoviesPage> {
   }
 
   void _sortAscending() {
-    setState(() {});
+    setState(() {
+      _sorted = true;
+      _cache.sort((a, b) {
+        if (a.releaseDate != null) {
+          if (b.releaseDate != null) {
+            return a.releaseDate.compareTo(b.releaseDate);
+          } else {
+            return 1;
+          }
+        } else {
+          if (b.releaseDate != null) {
+            return -1;
+          } else {
+            return 0;
+          }
+        }
+      });
+    });
   }
 
   void _sortDescending() {
-    setState(() {});
+    setState(() {
+      _sorted = false;
+      _cache.sort((a, b) {
+        if (b.releaseDate != null) {
+          if (a.releaseDate != null) {
+            return b.releaseDate.compareTo(a.releaseDate);
+          } else {
+            return 1;
+          }
+        } else {
+          if (a.releaseDate != null) {
+            return -1;
+          } else {
+            return 0;
+          }
+        }
+      });
+    });
   }
 
-  void _scrollListener() {}
+  void _scrollListener() {
+    if (loadMore &&
+        _scrollController.position.extentAfter < 500 &&
+        page() <= totalPages()) {
+      loadMore = false;
+      _client.getMovieSearchResultsByPage(page() + 1).then((value) {
+        setState(() {
+          _updateList(value);
+        });
+      });
+    }
+  }
 
-  void _updateList(MovieSearchResultCollection data) {}
+  void _updateList(MovieSearchResultCollection data) {
+    _collections.add(data);
+    _collections.sort((a, b) => a.page.compareTo(b.page));
+
+    var movies = _collections.map((entry) => entry.results).fold(
+        List<MovieSearchResult>(),
+        (previous, List<MovieSearchResult> element) =>
+            previous..addAll(element));
+
+    _cache.clear();
+    _cache.addAll(movies);
+    if (_sorted != null) {
+      if (_sorted) {
+        _sortAscending();
+      } else {
+        _sortDescending();
+      }
+    }
+  }
 }
 
 class MovieGridView extends StatelessWidget {
@@ -175,6 +262,6 @@ class MovieItemView extends StatelessWidget {
   }
 
   void _onTapGridItem(MovieSearchResult movie, BuildContext context) {
-    Navigator.push(context, MoviePageRoute.of(movie));
+    Navigator.push(context, MoviePageRoute.of(context, movie));
   }
 }
