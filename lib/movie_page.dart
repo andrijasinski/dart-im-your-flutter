@@ -28,11 +28,26 @@ class MoviePage extends StatelessWidget {
     return FutureBuilder<Movie>(
       future: _client.getMovie(searchResult.id),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
-        return MinimalMovieInfo(
-          movie: movieSearchResult,
-          scaffoldKey: scaffoldKey,
-          loading: true,
-        );
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+          case ConnectionState.waiting:
+            return MinimalMovieInfo(
+              movie: movieSearchResult,
+              scaffoldKey: scaffoldKey,
+              loading: true,
+            );
+          default:
+            if (snapshot.hasError)
+              return MinimalMovieInfo(
+                movie: movieSearchResult,
+                scaffoldKey: scaffoldKey,
+              );
+            else
+              return FullMovieInfo(
+                movie: snapshot.data,
+                scaffoldKey: scaffoldKey,
+              );
+        }
       },
     );
   }
@@ -143,7 +158,16 @@ class FullMovieInfo extends StatelessWidget {
   SliverChildListDelegate buildSliverChildListDelegate(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     return SliverChildListDelegate(<Widget>[
-      // implement widgets to show additional in movie information
+      MovieSpecsView(
+        title: movie.title,
+        posterPath: movie.posterPath,
+        voteAverage: movie.voteAverage,
+        voteCount: movie.voteCount,
+        key: Key(movie.title),
+      ),
+      TextOverviewWidget(movie.tagline, textTheme.body2),
+      TextOverviewWidget(movie.overview, textTheme.body1),
+      ReviewsWidget(reviews: movie.reviews.results),
     ]);
   }
 

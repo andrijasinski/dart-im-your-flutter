@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MoviesPage extends StatefulWidget {
-  MoviesPage({Key key, this.title}) : super(key: key);
+  MoviesPage({Key key, @required this.title}) : super(key: key);
 
   final String title;
 
@@ -39,25 +39,43 @@ class MoviesPage extends StatefulWidget {
 }
 
 class MoviesPageState extends State<MoviesPage> {
-  final _client = new ApiClient();
+  final ApiClient _client = new ApiClient();
+  final DateFormat _dateFormat = new DateFormat('yyyy');
 
   MoviesPageState();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   Widget _movieListWidgetFuture(ApiClient client) {
     return FutureBuilder<MovieSearchResultCollection>(
       future: client.getMovieSearchResults(),
-      builder: (BuildContext context,
-          AsyncSnapshot<MovieSearchResultCollection> snapshot) {
+      builder: (
+        BuildContext context,
+        AsyncSnapshot<MovieSearchResultCollection> snapshot,
+      ) {
         switch (snapshot.connectionState) {
           case ConnectionState.none:
           case ConnectionState.waiting:
-            return LoadingSpinner(text: 'Loading');
+            return LoadingSpinner(
+              text: 'Loading',
+            );
           default:
-            if (!snapshot.hasError) {
-              return MovieGridView(movies: snapshot.data.results);
-            } else {
+            if (snapshot.hasError) {
               return ErrorMessageWidget(
                 error: snapshot.error,
+              );
+            } else {
+              return MovieGridView(
+                movies: snapshot.data.results,
+                dateFormat: _dateFormat,
               );
             }
         }
@@ -72,28 +90,41 @@ class MoviesPageState extends State<MoviesPage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: new Text(widget.title),
+        actions: <Widget>[],
       ),
       body: _movieListWidgetFuture(_client),
       // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
+  void _sortAscending() {
+    setState(() {});
+  }
+
+  void _sortDescending() {
+    setState(() {});
+  }
+
+  void _scrollListener() {}
+
+  void _updateList(MovieSearchResultCollection data) {}
 }
 
 class MovieGridView extends StatelessWidget {
   final List<MovieSearchResult> movies;
-  final DateFormat dateFormat = DateFormat('yyyy');
+  final DateFormat dateFormat;
+  final ScrollController scrollController;
 
-  MovieGridView({Key key, @required this.movies});
+  MovieGridView({Key key, this.movies, this.dateFormat, this.scrollController});
 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
       gridDelegate: _createSliverGridDelegate(context),
       itemCount: movies.length,
-      itemBuilder: (BuildContext context, int index) => MovieItemView(
-            movie: movies[index],
-            dateFormat: dateFormat,
-          ),
+      controller: scrollController,
+      itemBuilder: (BuildContext context, int index) =>
+          MovieItemView(movie: movies[index], dateFormat: dateFormat),
     );
   }
 
