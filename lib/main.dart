@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:star_wars_movies/custom_widgets.dart';
 import 'package:star_wars_movies/models/models.dart';
 import 'package:star_wars_movies/services/api.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 const APP_TITLE = 'Star Wars Movies';
 
@@ -35,7 +38,7 @@ class MoviesPage extends StatefulWidget {
 }
 
 class MoviesPageState extends State<MoviesPage> {
-  final ApiClient _client = new ApiClient();
+  final _client = new ApiClient();
 
   MoviesPageState();
 
@@ -44,7 +47,19 @@ class MoviesPageState extends State<MoviesPage> {
       future: client.getMovieSearchResults(),
       builder: (BuildContext context,
           AsyncSnapshot<MovieSearchResultCollection> snapshot) {
-        return Center(child: Text('Step 2 Create a GridView with the result'));
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+          case ConnectionState.waiting:
+            return LoadingSpinner(text: 'Loading');
+          default:
+            if (!snapshot.hasError) {
+              return MovieGridView(movies: snapshot.data.results);
+            } else {
+              return ErrorMessageWidget(
+                error: snapshot.error,
+              );
+            }
+        }
       },
     );
   }
@@ -65,11 +80,69 @@ class MoviesPageState extends State<MoviesPage> {
 
 class MovieGridView extends StatelessWidget {
   final List<MovieSearchResult> movies;
+  final DateFormat dateFormat = DateFormat('yyyy');
 
   MovieGridView({Key key, @required this.movies});
 
   @override
   Widget build(BuildContext context) {
-    // Build the List or GridView with a builder
+    return GridView.builder(
+      gridDelegate: _createSliverGridDelegate(context),
+      itemCount: movies.length,
+      itemBuilder: (BuildContext context, int index) => MovieItemView(
+            movie: movies[index],
+            dateFormat: dateFormat,
+          ),
+    );
+  }
+
+  SliverGridDelegateWithFixedCrossAxisCount _createSliverGridDelegate(
+      BuildContext context) {
+    return SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount:
+            MediaQuery.of(context).orientation == Orientation.portrait ? 2 : 3,
+        childAspectRatio: 0.65);
+  }
+}
+
+class MovieItemView extends StatelessWidget {
+  final MovieSearchResult movie;
+  final DateFormat dateFormat;
+  const MovieItemView({
+    Key key,
+    @required this.movie,
+    @required this.dateFormat,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+        onTap: () => _onTapGridItem(movie, context),
+        child: Card(
+          elevation: 8.0,
+          child: GridTile(
+              child: movie.posterPath != null
+                  ? FadeInImage.memoryNetwork(
+                      placeholder: kTransparentImage,
+                      image:
+                          "https://image.tmdb.org/t/p/w154/${movie.posterPath}",
+                      fit: BoxFit.fitHeight,
+                    )
+                  : Image.memory(
+                      kTransparentImage,
+                      fit: BoxFit.fitHeight,
+                    ),
+              footer: GridTileBar(
+                title: Text(movie.title),
+                subtitle: movie.releaseDate != null
+                    ? Text(dateFormat.format(movie.releaseDate))
+                    : Text('TBA'),
+                backgroundColor: Colors.black54,
+              )),
+        ));
+  }
+
+  void _onTapGridItem(MovieSearchResult movie, BuildContext context) {
+    print('clicke movie: ${movie.title}');
   }
 }
