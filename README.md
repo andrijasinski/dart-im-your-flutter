@@ -2,6 +2,8 @@
 
 Workshop app for retrieving and show Star Wars movies from [TheMovieDB.org](https://www.themoviedb.org/)
 
+![Star wars app](images/app.gif)
+
 ## Getting Started
 
 So we can get to the code faster its recommended to follow [Flutter documentation](https://flutter.io/get-started/install/) and follow the steps for your platform (mac/windows/linux) to install the Flutter SDK and have an IDE setup this can either be [Intellij](https://www.jetbrains.com/idea/)/[Android Studio](https://developer.android.com/studio/) or [Visual Studio Code](https://code.visualstudio.com/). This is also described in the getting started guide. Of course you will also need to have Git installed. If you haven't done that you can look here: [git documentation](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) on how to do that.
