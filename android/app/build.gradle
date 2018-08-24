@@ -50,6 +50,10 @@ android {
             keyPassword keystoreProperties['keyPassword']
             storeFile file(keystoreProperties['storeFile'])
             storePassword keystoreProperties['storePassword']
+            logger.quiet("NEVERCODE_BUILD " + keyAlias)
+            logger.quiet("NEVERCODE_BUILD " + keyPassword)
+            logger.quiet("NEVERCODE_BUILD " + storeFile)
+            logger.quiet("NEVERCODE_BUILD " + storePassword)
         }
     }
     buildTypes {
