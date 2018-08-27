@@ -9,6 +9,6 @@ build/
 .flutter-plugins
 lib/**/*.g.dart
 
-ios/Runner.xcworkspace/xcshareddata/
-ios/Runner.xcworkspace/xcuserdata/
+
+
 key.jks
