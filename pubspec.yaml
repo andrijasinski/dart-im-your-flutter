@@ -22,6 +22,8 @@ dev_dependencies:
   json_serializable: ^0.5.7
   flutter_test:
     sdk: flutter
+  flutter_driver:
+    sdk: flutter
 
 dependency_overrides:
 # override dependencies so bot flutter_test and json_serializable can be used.
